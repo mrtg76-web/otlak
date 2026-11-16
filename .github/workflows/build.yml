@@ -20,7 +20,7 @@ jobs:
 
   macos:
     needs: tests
-    # GitHub'ın macOS makineleri bazen dolu oluyor: iki tür dene, biri yeter
+    # GitHub macOS makineleri bazen dolu: iki tür dene, hangisi biterse sürümü o yayınlar
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +46,7 @@ jobs:
           cp README.md dist/KURULUM.md
           lipo -info "$A/VST3/Otlak.vst3/Contents/MacOS/Otlak"
       - name: Publish latest build to release "son-surum"
-        if: matrix.runner == 'macos-latest' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
