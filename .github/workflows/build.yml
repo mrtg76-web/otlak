@@ -20,11 +20,11 @@ jobs:
 
   macos:
     needs: tests
-    # GitHub macOS makineleri bazen dolu: iki tür dene, hangisi biterse sürümü o yayınlar
+    # Intel makinede universal (arm64 + x86_64) derleniyor; macos-latest bu hesapta hep iptal oluyordu
     strategy:
       fail-fast: false
       matrix:
-        runner: [macos-15-intel, macos-latest]
+        runner: [macos-15-intel]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
