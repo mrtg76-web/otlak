@@ -1,0 +1,83 @@
+name: build
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Core tests
+        run: |
+          cmake -B build -DOT_BUILD_PLUGIN=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j4
+          ctest --test-dir build --output-on-failure
+
+  macos:
+    needs: tests
+    # GitHub'ın macOS makineleri bazen dolu oluyor: iki tür dene, biri yeter
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15-intel, macos-latest]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - name: "Configure (universal - Apple Silicon + Intel/Rosetta)"
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DOT_BUILD_TESTS=OFF
+      - name: Build
+        run: cmake --build build --config Release --target Otlak_VST3 Otlak_AU Otlak_Standalone -j4
+      - name: Sign (ad-hoc) and package
+        run: |
+          A=build/Otlak_artefacts/Release
+          codesign --force --deep -s - "$A/VST3/Otlak.vst3"
+          codesign --force --deep -s - "$A/AU/Otlak.component"
+          codesign --force --deep -s - "$A/Standalone/Otlak.app"
+          mkdir -p dist
+          ditto "$A/VST3/Otlak.vst3" dist/Otlak.vst3
+          ditto "$A/AU/Otlak.component" dist/Otlak.component
+          ditto "$A/Standalone/Otlak.app" dist/Otlak.app
+          cp README.md dist/KURULUM.md
+          lipo -info "$A/VST3/Otlak.vst3/Contents/MacOS/Otlak"
+      - name: Publish latest build to release "son-surum"
+        if: matrix.runner == 'macos-latest' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          (cd dist && ditto -c -k --sequesterRsrc . ../Otlak-mac.zip)
+          # Her derlemede yeniden oluştur: sayfadaki tarih ve notlar hep en son derlemeyi göstersin
+          gh release delete son-surum --cleanup-tag -y || true
+          MSG=$(git log -1 --pretty=%s)
+          gh release create son-surum Otlak-mac.zip --target "$GITHUB_SHA" --latest \
+            --title "Son sürüm (otomatik) — $(date -u +'%d.%m.%Y %H:%M') UTC" \
+            --notes "Son değişiklik: $MSG (commit ${GITHUB_SHA::7})"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: Otlak-mac-${{ matrix.runner }}
+          path: dist
+
+  windows:
+    needs: tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure
+        run: cmake -B build -DOT_BUILD_TESTS=OFF
+      - name: Build
+        run: cmake --build build --config Release --target Otlak_VST3 Otlak_Standalone
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp -r build/Otlak_artefacts/Release/VST3/Otlak.vst3 dist/
+          cp build/Otlak_artefacts/Release/Standalone/Otlak.exe dist/ || true
+      - uses: actions/upload-artifact@v5
+        with:
+          name: Otlak-windows
+          path: dist
