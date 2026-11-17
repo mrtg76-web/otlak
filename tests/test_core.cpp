@@ -64,7 +64,7 @@ static void testVoice()
                 mx = std::max(mx, std::abs(buf[i]));
             }
             CHECK(!nan, "algo %d NaN", a);
-            CHECK(mx <= 1.01f, "algo %d peak %f", a, mx);
+            CHECK(mx <= 2.5f, "algo %d peak %f", a, mx);
             CHECK(n < (int) buf.size(), "algo %d did not end", a);
         }
     }
@@ -237,8 +237,34 @@ static void testDice()
     CHECK(L.lock[5].full(), "variant generated");
 }
 
+// SUB alçak frekans enerjisini, NOISE yüksek frekans içeriğini artırmalı
+static void testSubNoise()
+{
+    std::vector<float> buf(48000 * 4);
+    auto lowEnergy = [&](int n) { double lp = 0, e = 0; for (int i = 0; i < n; ++i) { lp += 0.01 * (buf[i] - lp); e += lp * lp; } return e; };
+    auto zc = [&](int n) { int z = 0; for (int i = 1; i < n; ++i) z += (buf[i - 1] < 0) != (buf[i] < 0); return (double) z / n; };
+    Sound s;
+    for (int k = 0; k < kParams; ++k) s.p[k] = kInit[0][k];
+    s.algo = 0; s.r3 = 2; s.r4 = 3;
+    s.p[Sub] = 0;
+    int n = renderHit(s, 1, 48000, buf.data(), (int) buf.size());
+    const double e0 = lowEnergy(n);
+    s.p[Sub] = 0.9f;
+    n = renderHit(s, 1, 48000, buf.data(), (int) buf.size());
+    CHECK(lowEnergy(n) > e0 * 1.5, "sub adds low end (%f vs %f)", lowEnergy(n), e0);
+    for (int k = 0; k < kParams; ++k) s.p[k] = kInit[1][k];
+    s.algo = 3;
+    s.p[Noise] = 0; s.p[Feedback] = 0; s.p[Pitch] = 0.2f; s.p[Index] = 0.1f;
+    n = renderHit(s, 1, 48000, buf.data(), 4000);
+    const double z0 = zc(4000);
+    s.p[Noise] = 0.9f; s.p[NTone] = 0.8f;
+    renderHit(s, 1, 48000, buf.data(), 4000);
+    CHECK(zc(4000) > z0 * 1.3, "noise adds high content (%f vs %f)", zc(4000), z0);
+}
+
 int main()
 {
+    testSubNoise();
     testVoice();
     testTiming();
     testSampleHold();

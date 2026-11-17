@@ -17,7 +17,7 @@ static T pick(const std::vector<T>& v, std::mt19937& r) { return v[std::min(v.si
 void rollSound(int voice, Params& p, int& algo, VoiceExtra& x, bool mutate, std::mt19937& rng)
 {
     for (int k = 0; k < kParams; ++k) {
-        if (x.locks[k]) continue;
+        if (x.locks[k] || k == Level) continue;
         if (mutate) p[k] = (float) std::clamp(p[k] + (u(rng) - 0.5) * 0.2, 0.0, 1.0);
         else p[k] = (float) (kRange[voice][k][0] + u(rng) * (kRange[voice][k][1] - kRange[voice][k][0]));
     }
@@ -37,6 +37,7 @@ StepLock randomVariant(const Params& p, std::mt19937& rng)
 {
     StepLock l;
     for (int k = 0; k < kParams; ++k) {
+        if (k == Level) continue; // seviye mikserde, kilitlenmez
         l.v[k] = (float) std::clamp(p[k] + (u(rng) - 0.5) * 0.35, 0.0, 1.0);
         l.has[k] = true;
     }

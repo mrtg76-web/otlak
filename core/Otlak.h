@@ -7,14 +7,14 @@ namespace otlak {
 
 constexpr int kVoices = 6;
 constexpr int kSteps = 16;
-constexpr int kParams = 8;
+constexpr int kParams = 12;
 constexpr int kAlgos = 6;
 constexpr int kMults = 11;
 constexpr int kEvery = 6;
 constexpr int kResync = 5;
 constexpr int kMultOne = 5; // "1"
 
-enum Param { Pitch = 0, Ratio, Index, Feedback, PEnv, Decay, Fold, Crush };
+enum Param { Pitch = 0, Ratio, Index, Feedback, PEnv, Decay, Fold, Crush, Sub, Noise, NTone, Level };
 
 extern const char* const kVoiceNames[kVoices];
 extern const char* const kVoiceNotes[kVoices];

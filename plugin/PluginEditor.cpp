@@ -93,6 +93,7 @@ const OtlakEditor::Hit* OtlakEditor::hitAt(juce::Point<float> p) const
 
 OtlakEditor::DV OtlakEditor::dispVal(int v, int k) const
 {
+    if (k == Level) return {base[(size_t) v][(size_t) k], false};
     if (drag.active && drag.kind == kKnob && drag.a == v && drag.b == k && tempKnob >= 0) return {tempKnob, true};
     if (editing(v)) {
         const auto& l = kit.lane[(size_t) v].lock[(size_t) editSteps.front()];
@@ -121,49 +122,49 @@ void OtlakEditor::drawLock(juce::Graphics& g, float x, float y, juce::Colour c)
     g.strokePath(p, juce::PathStrokeType(1.2f));
 }
 
-void OtlakEditor::drawKnob(juce::Graphics& g, const Pal& P, juce::Rectangle<float> r, int v, int k, bool big)
+void OtlakEditor::drawKnobRaw(juce::Graphics& g, const Pal& P, juce::Rectangle<float> r, float value, bool locked)
 {
-    const auto dv = dispVal(v, k);
+    const float size = r.getWidth();
     const float cx = r.getCentreX(), cy = r.getCentreY();
-    const float rad = big ? 24.f : 15.f, w = big ? 3.f : 2.5f;
-    const float a0 = -2.35619f, a1 = 2.35619f, av = a0 + dv.v * (a1 - a0);
+    const float rad = size * 0.4f, w = size > 40 ? 3.f : 2.5f;
+    const float a0 = -2.35619f, a1 = 2.35619f, av = a0 + value * (a1 - a0);
     juce::Path tr, val;
     tr.addCentredArc(cx, cy, rad, rad, 0, a0, a1, true);
     g.setColour(P.track);
     g.strokePath(tr, juce::PathStrokeType(w));
-    if (dv.v > 0.002f) {
+    if (value > 0.002f) {
         val.addCentredArc(cx, cy, rad, rad, 0, a0, av, true);
-        g.setColour(dv.locked ? P.pl : P.acc);
+        g.setColour(locked ? P.pl : P.acc);
         g.strokePath(val, juce::PathStrokeType(w));
     }
-    const float face = big ? 17.f : 10.f;
+    const float face = size * 0.28f;
     g.setColour(P.face);
     g.fillEllipse(cx - face, cy - face, face * 2, face * 2);
     if (!P.dark) {
         g.setColour(P.ring);
         g.drawEllipse(cx - face, cy - face, face * 2, face * 2, 1.f);
     }
-    const float len = big ? 14.f : 8.f;
+    const float len = size * 0.23f;
     g.setColour(P.text);
-    g.drawLine(cx, cy, cx + std::sin(av) * len, cy - std::cos(av) * len, big ? 2.f : 1.6f);
+    g.drawLine(cx, cy, cx + std::sin(av) * len, cy - std::cos(av) * len, size > 40 ? 2.f : 1.6f);
 }
 
-void OtlakEditor::drawKnobCell(juce::Graphics& g, const Pal& P, float cx, float y, int v, int k, bool big)
+void OtlakEditor::drawKnobCell(juce::Graphics& g, const Pal& P, float cx, float y, int v, int k, float ks)
 {
-    const float ks = big ? 60.f : 36.f;
+    const bool big = ks > 40;
     auto kr = juce::Rectangle<float>(ks, ks).withCentre({cx, y + ks / 2});
-    drawKnob(g, P, kr, v, k, big);
+    const auto dv = dispVal(v, k);
+    drawKnobRaw(g, P, kr, dv.v, dv.locked);
     add(kr, kKnob, v, k);
-    const bool lk = kit.voice[(size_t) v].locks[(size_t) k];
+    const bool lk = kit.voice[(size_t) v].locks[(size_t) k] && k != Level;
     const auto f = lbl(big ? 9.5f : 9.f, false, 0.08f);
     const juce::String name = kParamNames[k];
     const float tw = f.getStringWidthFloat(name) + (lk ? 11.f : 0.f);
-    auto lr = juce::Rectangle<float>(tw + 8, 14).withCentre({cx, y + ks + (big ? 9.f : 7.f)});
+    auto lr = juce::Rectangle<float>(tw + 8, 14).withCentre({cx, y + ks + (big ? 8.f : 7.f)});
     if (lk) drawLock(g, lr.getX() + 4, lr.getY() + 2, P.pl);
-    text(g, name, lr.withTrimmedLeft(lk ? 15.f : 4.f), f, lk ? P.pl : P.muted, juce::Justification::centredLeft);
-    add(lr, kParamLock, v, k);
-    const auto dv = dispVal(v, k);
-    text(g, formatParam(k, dv.v), juce::Rectangle<float>(90, 14).withCentre({cx, y + ks + (big ? 24.f : 20.f)}), mono(big ? 11.f : 10.f),
+    text(g, name, lr.withTrimmedLeft(lk ? 15.f : 4.f), f, lk ? P.pl : (k == Level ? P.text : P.muted), juce::Justification::centredLeft);
+    if (k != Level) add(lr, kParamLock, v, k);
+    text(g, formatParam(k, dv.v), juce::Rectangle<float>(90, 14).withCentre({cx, y + ks + (big ? 22.f : 20.f)}), mono(big ? 11.f : 10.f),
          dv.locked ? P.pl : P.text, juce::Justification::centred);
 }
 
@@ -176,10 +177,10 @@ void OtlakEditor::paint(juce::Graphics& g)
     paintHeader(g, P);
     if (!P.dark) {
         paintKar(g, P);
-        paintSeq(g, P, {24.f, 344.f, 1152.f, 396.f});
+        paintSeq(g, P, {24.f, 414.f, 1152.f, 326.f});
     } else {
         paintFjord(g, P);
-        paintSeq(g, P, {24.f, 436.f, 1152.f, 304.f});
+        paintSeq(g, P, {24.f, 466.f, 1152.f, 274.f});
     }
 }
 
@@ -243,10 +244,11 @@ void OtlakEditor::paintHeader(juce::Graphics& g, const Pal& P)
     small({634, 18, 28, 28}, "+", kGmUp);
     g.setColour(P.line);
     g.fillRect(674.f, 18.f, 1.f, 28.f);
-    text(g, "VOL", {686, 14, 40, 12}, lbl(9), P.muted);
-    juce::Rectangle<float> vol(686, 26, 44, 24);
-    text(g, juce::String(juce::roundToInt(proc.volume() * 100)), vol, mono(13), P.text);
-    add(vol, kVol);
+    text(g, "MASTER", {686, 8, 80, 12}, lbl(9), P.muted);
+    juce::Rectangle<float> vk(686, 24, 32, 32);
+    drawKnobRaw(g, P, vk, proc.volume(), false);
+    text(g, juce::String(juce::roundToInt(proc.volume() * 100)), {722, 24, 40, 32}, mono(12), P.text);
+    add(vk.getUnion({722, 24, 40, 32}), kVol);
 
     // sağ grup
     juce::Rectangle<float> seg(800, 15, 128, 34);
@@ -282,7 +284,7 @@ void OtlakEditor::paintKar(juce::Graphics& g, const Pal& P)
 {
     const float cw = (1152.f - 60.f) / 6.f;
     for (int v = 0; v < kVoices; ++v) {
-        juce::Rectangle<float> c(24.f + v * (cw + 12.f), 80.f, cw, 248.f);
+        juce::Rectangle<float> c(24.f + v * (cw + 12.f), 80.f, cw, 318.f);
         g.setColour(P.panel);
         g.fillRoundedRectangle(c, 10);
         const bool ed = editing(v);
@@ -320,7 +322,7 @@ void OtlakEditor::paintKar(juce::Graphics& g, const Pal& P)
         for (int k = 0; k < kParams; ++k) {
             const float cx = c.getX() + 12 + colW * (k % 4 + 0.5f);
             const float y = c.getY() + 104 + (k / 4) * 70.f;
-            drawKnobCell(g, P, cx, y, v, k, false);
+            drawKnobCell(g, P, cx, y, v, k, 36.f);
         }
     }
 }
@@ -328,7 +330,7 @@ void OtlakEditor::paintKar(juce::Graphics& g, const Pal& P)
 void OtlakEditor::paintFjord(juce::Graphics& g, const Pal& P)
 {
     // ses listesi
-    juce::Rectangle<float> nav(24, 80, 256, 340);
+    juce::Rectangle<float> nav(24, 80, 256, 370);
     g.setColour(P.panel);
     g.fillRoundedRectangle(nav, 12);
     for (int v = 0; v < kVoices; ++v) {
@@ -349,7 +351,7 @@ void OtlakEditor::paintFjord(juce::Graphics& g, const Pal& P)
     }
     // editör
     const int v = sel;
-    juce::Rectangle<float> ed(296, 80, 880, 340);
+    juce::Rectangle<float> ed(296, 80, 880, 370);
     g.setColour(P.panel);
     g.fillRoundedRectangle(ed, 12);
     if (editing(v)) { g.setColour(P.pl); g.drawRoundedRectangle(ed.reduced(1), 12, 2); }
@@ -376,7 +378,7 @@ void OtlakEditor::paintFjord(juce::Graphics& g, const Pal& P)
     text(g, "ROLL", roll.withTrimmedLeft(42), lbl(10, true), P.accText);
     add(roll, kDice, v);
 
-    for (int k = 0; k < kParams; ++k) drawKnobCell(g, P, 318 + 90.f * (k % 4 + 0.5f), 150 + (k / 4) * 103.f, v, k, true);
+    for (int k = 0; k < kParams; ++k) drawKnobCell(g, P, 318 + 90.f * (k % 4 + 0.5f), 146 + (k / 4) * 92.f, v, k, 50.f);
 
     // zarf grafiği
     juce::Rectangle<float> env(706, 150, 448, 160);
@@ -472,7 +474,7 @@ void OtlakEditor::paintSeq(juce::Graphics& g, const Pal& P, juce::Rectangle<floa
     text(g, "SLEW", {cSlew, hy, 44, 20}, hf, P.muted);
     text(g, "NOW", {cNow, hy, 50, 20}, hf, P.muted);
 
-    const float rowH = P.dark ? 36.f : 40.f;
+    const float rowH = P.dark ? 30.f : 40.f;
     const float sw = 26.f, sh = P.dark ? 22.f : 26.f;
     for (int v = 0; v < kVoices; ++v) {
         const auto& L = kit.lane[(size_t) v];
@@ -630,7 +632,7 @@ void OtlakEditor::setDragValue(Kind k, int a, int b, float x)
     x = juce::jlimit(0.f, 1.f, x);
     switch (k) {
         case kKnob:
-            if (editing(a)) {
+            if (b != Level && editing(a)) {
                 const auto st = editSteps;
                 proc.editKit([&](Kit& kt) {
                     auto& L = kt.lane[(size_t) a];
@@ -694,7 +696,8 @@ void OtlakEditor::mouseDown(const juce::MouseEvent& e)
         if (k == kLen) drag.snap = kit.lane[(size_t) h->a];
         if (k == kKnob) {
             drag.recMode = !editing(h->a) && proc.rec.load() && proc.seqRunning.load();
-            if (!editing(h->a) && !drag.recMode) proc.beginParam(h->a, h->b);
+            if (h->b == Level) drag.recMode = false;
+            if ((h->b == Level || !editing(h->a)) && !drag.recMode) proc.beginParam(h->a, h->b);
             tempKnob = -1;
         }
         return;
@@ -722,7 +725,7 @@ void OtlakEditor::mouseUp(const juce::MouseEvent&)
     if (!drag.active) return;
     if (drag.kind == kKnob) {
         const int v = drag.a;
-        if (editing(v)) {
+        if (drag.b != Level && editing(v)) {
             if (drag.moved && !proc.seqRunning.load()) proc.auditionStep(v, editSteps.front());
         } else if (!drag.recMode) {
             proc.endParam(v, drag.b);
@@ -740,7 +743,7 @@ void OtlakEditor::mouseDoubleClick(const juce::MouseEvent& e)
     const Hit* h = hitAt(toDesign(e.position));
     if (!h || h->kind != kKnob) return;
     const int v = h->a, k = h->b;
-    if (editing(v)) {
+    if (k != Level && editing(v)) {
         const auto st = editSteps;
         proc.editKit([&](Kit& kt) {
             auto& L = kt.lane[(size_t) v];
@@ -764,7 +767,7 @@ void OtlakEditor::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWhe
     if (dir == 0) return;
     switch (h->kind) {
         case kKnob:
-            if (editing(h->a)) { drag.active = false; setDragValue(kKnob, h->a, h->b, dispVal(h->a, h->b).v + dir * 0.02f); }
+            if (h->b != Level && editing(h->a)) { drag.active = false; setDragValue(kKnob, h->a, h->b, dispVal(h->a, h->b).v + dir * 0.02f); }
             else proc.setParam(h->a, h->b, base[(size_t) h->a][(size_t) h->b] + dir * (e.mods.isShiftDown() ? 0.004f : 0.02f));
             break;
         case kLen: setDragValue(kLen, h->a, 0, dragValue(kLen, h->a, 0) + dir / 15.f); break;

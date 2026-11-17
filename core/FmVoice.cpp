@@ -20,7 +20,23 @@ void FmVoice::trigger(const Sound& s, float v)
     fbk = 0.5 * (p[Feedback] * 1.6) * 3.141592653589793;
     const double pd = p[PEnv] * 48.0;
     const double D = 0.008 * std::pow(2.0, p[Decay] * 9.0);
-    const double len = std::min(3.0, D * 1.1 + 0.006);
+    subAmt = p[Sub];
+    noiseAmt = p[Noise];
+    const double Dsub = D * 1.8 + 0.08 * subAmt;
+    const double Dn = std::max(0.004, D * 0.8);
+    kS = std::exp(-1.0 / (Dsub / 6.9 * sr));
+    kN = std::exp(-1.0 / (Dn / 6.9 * sr));
+    sa = na = 1;
+    const double fc = std::min(300.0 * std::pow(2.0, p[NTone] * 5.3), sr * 0.45);
+    const double gg = std::tan(3.141592653589793 * fc / sr);
+    svK = 1.0 / 0.7; // Q 0.7: geniş bant
+    svA1 = 1.0 / (1.0 + gg * (gg + svK));
+    svA2 = gg * svA1;
+    svA3 = gg * svA2;
+    ic1 = ic2 = 0;
+    seed = 0x9E3779B9u ^ (unsigned int) (p[NTone] * 100000.f) ^ (unsigned int) (vel * 1000.f);
+    fmMix = 1.0 - 0.4 * std::max(subAmt, noiseAmt);
+    const double len = std::min(3.0, std::max(D, subAmt > 0.01 ? Dsub : 0.0) * 1.1 + 0.006);
     total = std::max(64, (int) std::ceil(len * sr));
     const double tauA = D / 6.9;
     const double tauI = tauA * 0.5 + 0.0015;
@@ -89,8 +105,21 @@ void FmVoice::render(float* out, int n)
         m2 = m1;
         m1 = fs;
         if (fold > 0.01f) y = std::sin(y * foldG);
-        y *= a * (pos < att ? (double) pos / att : 1.0);
+        const double ramp = pos < att ? (double) pos / att : 1.0;
+        y *= a * ramp * fmMix;
         a *= ka;
+        if (subAmt > 0.001) { y += std::sin(TP * p1) * sa * subAmt * 0.9 * ramp; sa *= kS; }
+        if (noiseAmt > 0.001) {
+            seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5;
+            const double w = (double) seed / 2147483648.0 - 1.0;
+            const double v3 = w - ic2;
+            const double v1 = svA1 * ic1 + svA2 * v3;
+            const double v2 = ic2 + svA2 * ic1 + svA3 * v3;
+            ic1 = 2 * v1 - ic1;
+            ic2 = 2 * v2 - ic2;
+            y += v1 * svK * na * noiseAmt * 0.9 * ramp;
+            na *= kN;
+        }
         float yf = (float) y;
         if (hold > 1) {
             if (pos % hold == 0) held = yf;

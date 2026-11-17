@@ -25,6 +25,10 @@ private:
     // durum
     double p1 = 0, p2 = 0, p3 = 0, p4 = 0, m1 = 0, m2 = 0, a = 1, ie = 1, pe = 1;
     float held = 0;
+    // SUB (temiz sinüs gövde) ve NOISE (filtreli beyaz gürültü)
+    double subAmt = 0, sa = 1, kS = 0, noiseAmt = 0, na = 1, kN = 0;
+    double svA1 = 0, svA2 = 0, svA3 = 0, svK = 1, ic1 = 0, ic2 = 0, fmMix = 1;
+    unsigned int seed = 0x12345u;
     float fadeGain = 1, fadeStep = 0;
 };
 

@@ -7,7 +7,7 @@ namespace otlak {
 const char* const kVoiceNames[kVoices] = {"KICK", "SNARE", "PERC 1", "PERC 2", "HAT", "GLITCH"};
 const char* const kVoiceNotes[kVoices] = {"C1", "D1", "E1", "F1", "F#1", "G1"};
 const int kVoiceMidi[kVoices] = {36, 38, 40, 41, 42, 43};
-const char* const kParamNames[kParams] = {"PITCH", "RATIO", "INDEX", "FDBK", "P.ENV", "DECAY", "FOLD", "CRUSH"};
+const char* const kParamNames[kParams] = {"PITCH", "RATIO", "INDEX", "FDBK", "P.ENV", "DECAY", "FOLD", "CRUSH", "SUB", "NOISE", "N.TONE", "LEVEL"};
 const char* const kMultNames[kMults] = {"1/4", "1/3", "1/2", "2/3", "3/4", "1", "5/4", "3/2", "2", "3", "4"};
 const double kMultValues[kMults] = {0.25, 1.0 / 3.0, 0.5, 2.0 / 3.0, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0};
 const char* const kEveryNames[kEvery] = {"1/16", "1/8", "1/4", "1/2", "1 bar", "2 bar"};
@@ -18,21 +18,21 @@ const char* const kAlgoRoutes[kAlgos] = {"2>1", "2+3>1", "4>3>2>1", "2>1 + 4>3",
 
 // Zarın her ses için kullandığı aralıklar (0..1)
 const float kRange[kVoices][kParams][2] = {
-    {{0.f, .35f}, {0.f, .25f}, {.1f, .5f}, {0.f, .3f}, {.4f, .9f}, {.4f, .7f}, {0.f, .4f}, {0.f, .3f}},
-    {{.3f, .6f}, {.2f, .7f}, {.3f, .8f}, {.3f, .8f}, {.1f, .5f}, {.3f, .6f}, {0.f, .6f}, {0.f, .5f}},
-    {{.35f, .75f}, {.1f, 1.f}, {.2f, .9f}, {0.f, .6f}, {0.f, .6f}, {.15f, .5f}, {0.f, .8f}, {0.f, .6f}},
-    {{.4f, .85f}, {.1f, 1.f}, {.3f, 1.f}, {.2f, .9f}, {0.f, .4f}, {.1f, .45f}, {0.f, 1.f}, {0.f, .8f}},
-    {{.75f, 1.f}, {.5f, 1.f}, {.5f, 1.f}, {.5f, 1.f}, {0.f, .2f}, {.05f, .4f}, {0.f, .5f}, {0.f, .6f}},
-    {{0.f, 1.f}, {0.f, 1.f}, {.4f, 1.f}, {.4f, 1.f}, {0.f, 1.f}, {0.f, .35f}, {.3f, 1.f}, {.3f, 1.f}},
+    {{0.f, .35f}, {0.f, .25f}, {.1f, .5f}, {0.f, .3f}, {.4f, .9f}, {.4f, .7f}, {0.f, .4f}, {0.f, .3f}, {.3f, .9f}, {0.f, .15f}, {.1f, .4f}, {.8f, .8f}},
+    {{.3f, .6f}, {.2f, .7f}, {.3f, .8f}, {.3f, .8f}, {.1f, .5f}, {.3f, .6f}, {0.f, .6f}, {0.f, .5f}, {0.f, .3f}, {.3f, .8f}, {.35f, .7f}, {.8f, .8f}},
+    {{.35f, .75f}, {.1f, 1.f}, {.2f, .9f}, {0.f, .6f}, {0.f, .6f}, {.15f, .5f}, {0.f, .8f}, {0.f, .6f}, {0.f, .3f}, {0.f, .3f}, {.3f, .8f}, {.8f, .8f}},
+    {{.4f, .85f}, {.1f, 1.f}, {.3f, 1.f}, {.2f, .9f}, {0.f, .4f}, {.1f, .45f}, {0.f, 1.f}, {0.f, .8f}, {0.f, .2f}, {0.f, .4f}, {.3f, .9f}, {.8f, .8f}},
+    {{.75f, 1.f}, {.5f, 1.f}, {.5f, 1.f}, {.5f, 1.f}, {0.f, .2f}, {.05f, .4f}, {0.f, .5f}, {0.f, .6f}, {0.f, 0.f}, {.2f, .8f}, {.7f, 1.f}, {.8f, .8f}},
+    {{0.f, 1.f}, {0.f, 1.f}, {.4f, 1.f}, {.4f, 1.f}, {0.f, 1.f}, {0.f, .35f}, {.3f, 1.f}, {.3f, 1.f}, {0.f, .5f}, {0.f, .6f}, {0.f, 1.f}, {.8f, .8f}},
 };
 
 const float kInit[kVoices][kParams] = {
-    {.18f, .08f, .32f, .10f, .72f, .55f, .10f, 0.f},
-    {.45f, .41f, .55f, .60f, .30f, .45f, .20f, .15f},
-    {.60f, .73f, .62f, .25f, .20f, .35f, .35f, .10f},
-    {.66f, .90f, .70f, .55f, .12f, .30f, .60f, .45f},
-    {.88f, .83f, .78f, .72f, .05f, .25f, .15f, .30f},
-    {.50f, .37f, .85f, .80f, .60f, .20f, .70f, .65f},
+    {.18f, .08f, .32f, .10f, .72f, .55f, .10f, 0.f, 0.55f, 0.04f, 0.25f, .8f},
+    {.45f, .41f, .55f, .60f, .30f, .45f, .20f, .15f, 0.1f, 0.55f, 0.55f, .8f},
+    {.60f, .73f, .62f, .25f, .20f, .35f, .35f, .10f, 0.f, 0.1f, 0.6f, .8f},
+    {.66f, .90f, .70f, .55f, .12f, .30f, .60f, .45f, 0.f, 0.15f, 0.7f, .8f},
+    {.88f, .83f, .78f, .72f, .05f, .25f, .15f, .30f, 0.f, 0.45f, 0.85f, .8f},
+    {.50f, .37f, .85f, .80f, .60f, .20f, .70f, .65f, 0.1f, 0.2f, 0.5f, .8f},
 };
 const int kInitAlgo[kVoices] = {0, 3, 1, 5, 4, 2};
 const float kInitRatios[kVoices][2] = {{2.f, 3.f}, {1.5f, 5.4f}, {2.76f, 1.41f}, {3.14f, 4.2f}, {3.5f, 7.13f}, {1.41f, 2.76f}};
@@ -49,6 +49,12 @@ std::string formatParam(int k, float v)
             const double ms = 8.0 * std::pow(2.0, v * 9.0);
             if (ms < 1000.0) std::snprintf(b, sizeof b, "%dms", (int) std::lround(ms));
             else std::snprintf(b, sizeof b, "%.2fs", ms / 1000.0);
+            break;
+        }
+        case NTone: {
+            const double hz = 300.0 * std::pow(2.0, v * 5.3);
+            if (hz < 1000.0) std::snprintf(b, sizeof b, "%dHz", (int) std::lround(hz));
+            else std::snprintf(b, sizeof b, "%.1fk", hz / 1000.0);
             break;
         }
         case Crush:
@@ -84,7 +90,8 @@ bool StepLock::any() const
 }
 bool StepLock::full() const
 {
-    for (bool h : has) if (!h) return false;
+    for (int k = 0; k < kParams; ++k)
+        if (k != Level && !has[k]) return false;
     return true;
 }
 void StepLock::clear()

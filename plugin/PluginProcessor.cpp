@@ -216,7 +216,8 @@ void OtlakProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
             hits[v]++;
         }
         channels[(size_t) v].render(vb + pos, n - pos);
-        for (int i = 0; i < n; ++i) mixBuf[(size_t) i] += vb[i] * 0.6f;
+        const float lv = pv[v][Level]->load() * 0.75f; // kanal seviyesi (canlı, kilitlenmez)
+        for (int i = 0; i < n; ++i) mixBuf[(size_t) i] += vb[i] * lv;
     }
     const float g = volume();
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {

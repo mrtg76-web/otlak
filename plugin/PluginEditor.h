@@ -77,8 +77,8 @@ private:
     void paintKar(juce::Graphics&, const Pal&);
     void paintFjord(juce::Graphics&, const Pal&);
     void paintSeq(juce::Graphics&, const Pal&, juce::Rectangle<float> area);
-    void drawKnob(juce::Graphics&, const Pal&, juce::Rectangle<float> r, int v, int k, bool big);
-    void drawKnobCell(juce::Graphics&, const Pal&, float cx, float y, int v, int k, bool big);
+    void drawKnobRaw(juce::Graphics&, const Pal&, juce::Rectangle<float> r, float value, bool locked);
+    void drawKnobCell(juce::Graphics&, const Pal&, float cx, float y, int v, int k, float size);
     void drawDice(juce::Graphics&, juce::Rectangle<float> r, juce::Colour c, float size);
     void drawLock(juce::Graphics&, float x, float y, juce::Colour c);
 

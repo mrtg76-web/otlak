@@ -33,7 +33,13 @@ Altı ses var: KICK, SNARE, PERC 1, PERC 2, HAT, GLITCH. Hepsi aynı 4 operatör
 | RING | (2→1)×(4→3) | Halka modülasyonu, çınlayan metal |
 | BRANCH | 4→1,2,3 | Çan/gong kümesi |
 
-Parametreler: PITCH, RATIO (OP2 oranı), INDEX, FDBK (feedback), P.ENV (pitch zarfı), DECAY, FOLD (wavefolder), CRUSH (bit/sample-rate düşürme). OP3 ve OP4 oranlarını zar seçiyor, Fjord görünümünde hepsi görünüyor. Bütün ses parametreleri Ableton'da otomasyona açık.
+Parametreler:
+- **FM:** PITCH, RATIO (OP2 oranı), INDEX, FDBK (feedback), P.ENV (pitch zarfı), DECAY, FOLD (wavefolder), CRUSH (bit/sample-rate düşürme). OP3 ve OP4 oranlarını zar seçiyor, Fjord görünümünde hepsi görünüyor.
+- **SUB:** FM'den ayrı, pitch zarfını takip eden temiz bir sinüs gövde. Daha uzun söner. Kick'e derin bas vermek için.
+- **NOISE / N.TONE:** Filtreli beyaz gürültü katmanı. N.TONE gürültünün rengini (300 Hz – 12 kHz) belirler. Snare ve hat için.
+- **LEVEL:** Kanal seviyesi. Zar buna dokunmaz. Başlıktaki **MASTER** genel seviye.
+
+Bütün parametreler Ableton'da otomasyona açık.
 
 - **Zar:** Tık yeni ses, Shift+tık mutasyon (küçük değişiklik). Her ses kendi aralığında kalıyor. **KIT** bütün sesleri zarlıyor.
 - **Kilitler:** Parametre adına tıklayınca o parametre zardan korunuyor. **ALGO** / **LOCK** algoritmayı koruyor.
